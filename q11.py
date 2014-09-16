@@ -1,3 +1,6 @@
+import math
+from itertools import count
+
 nums = [int(i) for i in """
 08 02 22 97 38 15 00 40 00 75 04 05 07 78 52 12 50 77 91 08
 49 49 99 40 17 81 18 57 60 87 17 40 98 43 69 48 04 56 62 00
@@ -19,21 +22,64 @@ nums = [int(i) for i in """
 20 69 36 41 72 30 23 88 34 62 99 69 82 67 59 85 74 04 36 16
 20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
 01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48""".split()]
-grid = [nums[idx:idx+20] for idx in range(0, len(nums), 20)]
-length = 4
+num = 4
 
 
-def products():
-    # horizontal:
-    for y in range(20):
-        print y
-        for x in range(21 - length):
-            yield reduce(lambda q, r: q * r, grid[y][x:x+length])
+class Grid(object):
+    def __init__(self, digits):
+        self.digits = digits
+        self.width = int(math.sqrt(len(digits)))
+        self.transformers = [
+            lambda x, y: y * self.width + x,
+            lambda x, y: ((self.width - 1) - x) * self.width + y,
+        ]
 
-    # vertical:
-    for x in range(20):
-        for y in range(21 - length):
-            yield reduce(lambda q, r: q * r, [grid[y+z][x] for z in range(4)])
+    def __getitem__(self, coord):
+        return self.digits[self.transformers[0](*coord)]
 
-    # diagonal:
-    pass
+    def rotate(self):
+        self.transformers.append(self.transformers.pop(0))
+
+    def horizontals(self):
+        for y in xrange(self.width):
+            yield [self[(x, y)] for x in xrange(self.width)]
+
+    def _diagonal(self, x, y):
+        l = []
+        while x < self.width and y < self.width:
+            l.append(self[(x, y)])
+            x += 1
+            y += 1
+        return l
+
+    def diagonals(self):
+        for y in xrange(self.width - 1, -1, -1):
+            yield self._diagonal(y, 0)
+        for x in xrange(1, self.width):
+            yield self._diagonal(0, x)
+
+
+def chunks(nums, length):
+    for i in count():
+        if i + length <= len(nums):
+            yield nums[i:i+length]
+        else:
+            break
+
+
+def max_product(line, length):
+    """Returns the highest product of `length` consecutive numbers in `line`"""
+    products = [reduce(lambda a, b: a * b, chunk)
+                for chunk in chunks(line, length)]
+    return 0 if len(products) < 1 else max(products)
+
+
+g = Grid(nums)
+highest = 0
+for _ in range(2):
+    highest = max([highest] + [max_product(line, num)
+                               for line in g.horizontals()])
+    highest = max([highest] + [max_product(line, num)
+                               for line in g.diagonals()])
+    g.rotate()
+print highest
