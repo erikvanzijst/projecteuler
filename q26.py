@@ -1,6 +1,3 @@
-import hashlib
-
-
 def fractions(b):
     a = 1
     while a:
@@ -17,8 +14,5 @@ def reciprocal_cycle(b):
     if a in nums:
         return len(nums) - nums.index(a)
 
-d = max(((i, reciprocal_cycle(d)) for i, d in enumerate(xrange(1, 1000), 1)),
-        key=lambda j: j[1])[0]
-assert ('6aab1270668d8cac7cef2566a1c5f569' ==
-        hashlib.md5(str(d)).hexdigest()), 'Wrong answer'
-print d
+print max(((i, reciprocal_cycle(d)) for i, d in enumerate(xrange(1, 1000), 1)),
+          key=lambda j: j[1])[0]
